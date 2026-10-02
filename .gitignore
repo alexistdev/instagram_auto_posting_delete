@@ -1,0 +1,12 @@
+# Sesi login Instagram (berisi cookie — JANGAN PERNAH di-commit)
+instagram_browser_profile/
+
+# State & log lokal
+instagram_checkpoint.json
+instagram_checkpoint.tmp
+instagram_cleanup.log
+instagram_cleanup.lock
+
+__pycache__/
+*.pyc
+.venv/
