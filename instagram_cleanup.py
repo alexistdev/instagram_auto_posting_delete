@@ -44,7 +44,7 @@ from playwright.sync_api import sync_playwright
 BASE_DIR = Path(__file__).resolve().parent
 
 DEFAULT_USERNAME = os.environ.get("INSTAGRAM_USERNAME", "")
-DEFAULT_POSTS_PER_HOUR = 5
+DEFAULT_POSTS_PER_HOUR = 9
 DEFAULT_MIN_DELAY = 5
 DEFAULT_MAX_DELAY = 10
 
@@ -88,13 +88,43 @@ def log(message):
 # LOCK (cegah dua bot/proses berjalan bersamaan)
 # ============================================================
 
+def read_lock_pid():
+    try:
+        return int(LOCK_FILE.read_text().strip())
+    except Exception:
+        return None
+
+
+def pid_alive(pid):
+    if not pid:
+        return False
+
+    if os.name == "nt":
+        # os.kill(pid, 0) di Windows akan MEMBUNUH proses, jadi pakai WinAPI.
+        import ctypes
+
+        handle = ctypes.windll.kernel32.OpenProcess(0x1000, False, pid)
+        if not handle:
+            return False
+        ctypes.windll.kernel32.CloseHandle(handle)
+        return True
+
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
 def acquire_lock():
     try:
         fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
-        # Lock basi (> 3 jam) dianggap sisa proses yang crash.
+        # Lock basi = prosesnya sudah mati (mis. Gateway restart) atau > 3 jam.
         age = time.time() - LOCK_FILE.stat().st_mtime
-        if age < 3 * 3600:
+        if pid_alive(read_lock_pid()) and age < 3 * 3600:
             raise CleanupExit(EXIT_LOCKED, "locked")
         LOCK_FILE.unlink(missing_ok=True)
         fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
@@ -565,7 +595,7 @@ def parse_args():
     parser.add_argument("--username", default=DEFAULT_USERNAME,
                         help="Username Instagram (atau env INSTAGRAM_USERNAME)")
     parser.add_argument("--limit", type=int, default=DEFAULT_POSTS_PER_HOUR,
-                        help="Maks postingan per batch (default 5)")
+                        help="Maks postingan per batch (default 9)")
     parser.add_argument("--min-delay", type=float, default=DEFAULT_MIN_DELAY)
     parser.add_argument("--max-delay", type=float, default=DEFAULT_MAX_DELAY)
     parser.add_argument("--execute", action="store_true",

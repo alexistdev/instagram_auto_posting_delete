@@ -1,7 +1,7 @@
 # Instagram Cleanup
 
 Script Python untuk menghapus postingan Instagram **akun milik sendiri** secara bertahap
-(default 5 postingan per jam, jeda acak antar postingan), dengan browser otomatis
+(default 9 postingan per jam, jeda acak antar postingan), dengan browser otomatis
 ([Playwright](https://playwright.dev/python/)). Dirancang agar bisa dijalankan tanpa interaksi
 oleh bot/scheduler seperti [OpenClaw](https://docs.openclaw.ai/).
 
@@ -87,7 +87,7 @@ jika menu/tombol hapus tidak ditemukan, script mencatatnya sebagai gagal di log.
 | `--headless` | Browser tanpa jendela (untuk bot/scheduler). |
 | `--execute` | Hapus sungguhan. Tanpa ini = dry-run. |
 | `--confirm DELETE` | Wajib bersama `--execute`. |
-| `--limit N` | Maks postingan per batch (default 5). |
+| `--limit N` | Maks postingan per batch (default 9). |
 | `--min-delay` / `--max-delay` | Jeda acak antar postingan, detik (default 5–10). |
 | `--wait` | Tunggu sampai interval 1 jam terpenuhi, bukan langsung keluar kode 3. |
 
@@ -160,7 +160,7 @@ openclaw cron add `
   --session isolated `
   --command-argv $argv `
   --command-cwd "C:\path\ke\instagram_cleanup" `
-  --timeout-seconds 1800 `
+  --timeout-seconds 3000 `
   --announce --channel telegram --account <nama-account-bot> --to <chatId> `
   --best-effort-deliver
 ```
@@ -176,15 +176,15 @@ openclaw cron add \
   --session isolated \
   --command-argv '["/path/ke/python","/path/ke/instagram_cleanup/instagram_cleanup.py","--username","NAMA_AKUN_ANDA","--headless","--execute","--confirm","DELETE","--min-delay","120","--max-delay","300"]' \
   --command-cwd /path/ke/instagram_cleanup \
-  --timeout-seconds 1800 \
+  --timeout-seconds 3000 \
   --announce --channel telegram --account <nama-account-bot> --to <chatId> \
   --best-effort-deliver
 ```
 
 Catatan:
 - Tanpa laporan Telegram, hapus `--announce --channel ... --account ... --to ...`.
-- Dengan jeda 120–300 detik, satu batch 5 postingan butuh ±8–20 menit, jadi
-  `--timeout-seconds 1800` (30 menit) dipakai agar tidak terpotong.
+- Dengan jeda 120–300 detik, satu batch 9 postingan butuh ±16–40 menit, jadi
+  `--timeout-seconds 3000` (50 menit) dipakai agar tidak terpotong.
 - Ingin mencoba dulu tanpa menghapus? Buang `--execute --confirm DELETE`, atau tambahkan
   `--disabled` pada `cron add` lalu aktifkan setelah siap.
 
